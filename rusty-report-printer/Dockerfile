@@ -1,4 +1,6 @@
-FROM rust:1.61-alpine3.15 as build
+FROM rustlang/rust:nightly-alpine as build
+
+ENV CARGO_UNSTABLE_SPARSE_REGISTRY=true
 
 RUN apk add --no-cache musl-dev=1.2.2-r7
 
