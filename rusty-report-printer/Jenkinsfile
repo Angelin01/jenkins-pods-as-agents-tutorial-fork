@@ -6,8 +6,16 @@ import groovy.transform.Field
 pipeline {
     agent {
         kubernetes {
+            defaultContainer 'rust'
             yaml '''
-              # Your pod goes here, you can erase this comment
+              spec:
+                containers:
+                  - name: rust
+                    image: rust:1.61-alpine3.15
+                    command: ["sleep", "infinity"]
+                  - name: node
+                    image: node:18.2.0-alpine3.15
+                    command: ["sleep", "infinity"]
             '''
         }
     }
@@ -22,19 +30,21 @@ pipeline {
         stage('Generate Report') {
             steps {
                 dir(PROJECT_DIR) {
-                    sh './report_generator.js'
+                    container ('node') {
+                        sh './report_generator.js'
+                    }
                 }
             }
         }
 
-//        stage('Install dependencies') {
-//            steps {
-//                dir(PROJECT_DIR) {
-//                    // if we are on alpine, we need to install musl-dev
-//                    // sh 'apk add --no-cache musl-dev=1.2.2-r7'
-//                }
-//            }
-//        }
+        stage('Install dependencies') {
+            steps {
+                dir(PROJECT_DIR) {
+                    // if we are on alpine, we need to install musl-dev
+                     sh 'apk add --no-cache musl-dev=1.2.2-r7'
+                }
+            }
+        }
 
         stage('Build') {
             steps {
