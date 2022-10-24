@@ -14,9 +14,23 @@ pipeline {
                 - name: node
                   image: node:16.15-alpine3.16
                   command: ["sleep", "infinity"]
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 128Mi
+                    limits:
+                      cpu: 1
+                      memory: 128Mi
                 - name: python
                   image: python:3.10-alpine3.16
                   command: ["sleep", "infinity"]
+                  resources:
+                    requests:
+                      cpu: 10m
+                      memory: 16Mi
+                    limits:
+                      cpu: 1
+                      memory: 16Mi
             '''
         }
     }
