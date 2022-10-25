@@ -22,6 +22,16 @@ pipeline {
                       limits:
                         cpu: 2
                         memory: 256Mi
+                  - name: kaniko
+                    image: gcr.io/kaniko-project/executor:v1.8.1-debug
+                    command: ["sleep", "infinity"]
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 512Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
             '''
         }
     }
@@ -56,6 +66,7 @@ pipeline {
             }
         }
 
+
         stage('Build') {
             steps {
                 dir(PROJECT_DIR) {
@@ -64,18 +75,18 @@ pipeline {
             }
         }
 
-        // Oh no, we can't perform regular Docker Builds on Kubernetes
-        /*
         stage('Build Image') {
-            environment {
-                DOCKER_BUILDKIT = "1"
-            }
             steps {
                 dir(PROJECT_DIR) {
-                    sh 'docker build -t super-report-printer:v0.1.0 .'
+                    container('kaniko') {
+                        sh '''/kaniko/executor --context=. \\
+                          --dockerfile=./Dockerfile \\
+                          --destination=rusty-report-printer:v0.1.0 \\
+                          --no-push
+                        '''
+                    }
                 }
             }
         }
-         */
     }
 }
