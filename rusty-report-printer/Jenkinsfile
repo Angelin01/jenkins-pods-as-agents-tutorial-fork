@@ -13,9 +13,23 @@ pipeline {
                   - name: rust
                     image: rustlang/rust:nightly-alpine
                     command: ["sleep", "infinity"]
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 256Mi
                   - name: node
                     image: node:18.2.0-alpine3.15
                     command: ["sleep", "infinity"]
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 12Mi
+                      limits:
+                        cpu: 1
+                        memory: 12Mi
             '''
         }
     }
