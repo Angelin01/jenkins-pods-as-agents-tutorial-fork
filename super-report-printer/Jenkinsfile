@@ -23,6 +23,16 @@ pipeline {
                     limits:
                       cpu: 1
                       memory: 16Mi
+                - name: kaniko
+                  image: gcr.io/kaniko-project/executor:v1.9.1-debug
+                  command: ["sleep", "infinity"]
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 512Mi
+                    limits:
+                      cpu: 2
+                      memory: 1Gi
             '''
         }
     }
@@ -60,17 +70,19 @@ pipeline {
             }
         }
 
-//        stage('Build Image') {
-//            environment {
-//                DOCKER_BUILDKIT = "1"
-//            }
-//            steps {
-//                dir(PROJECT_DIR) {
-//                    // Some of our agents don't have Docker, what do we do?
-//                    // Also, we are always tagging with the same tag! Help!
-//                    sh 'docker build -t super-report-printer:v0.1.0 .'
-//                }
-//            }
-//        }
+        stage('Build Image') {
+            steps {
+                dir(PROJECT_DIR) {
+                   container('kaniko') {
+                       sh '''/kaniko/executor --context=. \\
+                         --dockerfile=./Dockerfile \\
+                         --destination=super-report-printer:v0.1.0 \\
+                         --use-new-run --snapshotMode=redo \\
+                         --no-push
+                       '''
+                   }
+                }
+            }
+        }
     }
 }
