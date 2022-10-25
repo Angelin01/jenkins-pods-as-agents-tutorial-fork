@@ -6,6 +6,8 @@ import groovy.transform.Field
 pipeline {
     agent {
         kubernetes {
+            inheritFrom 'Node18Alpine'
+            yamlMergeStrategy merge()
             defaultContainer 'rust'
             yaml '''
               spec:
@@ -20,16 +22,6 @@ pipeline {
                       limits:
                         cpu: 2
                         memory: 256Mi
-                  - name: node
-                    image: node:18.2.0-alpine3.15
-                    command: ["sleep", "infinity"]
-                    resources:
-                      requests:
-                        cpu: 100m
-                        memory: 12Mi
-                      limits:
-                        cpu: 1
-                        memory: 12Mi
             '''
         }
     }
@@ -48,7 +40,7 @@ pipeline {
         stage('Generate Report') {
             steps {
                 dir(PROJECT_DIR) {
-                    container ('node') {
+                    container('node18') {
                         sh './report_generator.js'
                     }
                 }
@@ -59,7 +51,7 @@ pipeline {
             steps {
                 dir(PROJECT_DIR) {
                     // if we are on alpine, we need to install musl-dev
-                     sh 'apk add --no-cache musl-dev=1.2.2-r7'
+                    sh 'apk add --no-cache musl-dev=1.2.2-r7'
                 }
             }
         }
