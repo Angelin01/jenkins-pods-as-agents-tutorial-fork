@@ -68,30 +68,27 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                dir(PROJECT_DIR) {
-                    container('kaniko') {
-                        sh """/kaniko/executor --context=. \\
-                          --dockerfile=./Dockerfile \\
-                          ${getKanikoDestinations()} \\
-                          --use-new-run --snapshotMode=redo \\
-                          --no-push
-                       """
-                    }
+                script {
+                    kaniko.buildNoPush(
+                            imageName: 'rusty-report-printer',
+                            imageTag: getImageTags(),
+                            context: PROJECT_DIR,
+                            dockerfile: './Dockerfile',
+                            extraArgs: '--use-new-run --snapshotMode=redo'
+                    )
                 }
             }
         }
     }
 }
 
-def getKanikoDestinations() {
-    def commitTag = "${env.GIT_BRANCH.replace('/', '-')}-${env.GIT_COMMIT}"
+def getImageTags() {
+    def commitTag = sanitizeImageTag("${env.GIT_BRANCH}-${env.GIT_COMMIT}")
     def tags = [commitTag]
 
-    if (env.GIT_BRANCH == 'master') {
+    if (isMaster()) {
         tags += 'latest'
     }
 
-    return tags.collect {
-        tag -> "--destination=rusty-report-printer:${tag}"
-    }.join(' ')
+    return tags
 }
