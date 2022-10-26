@@ -1,5 +1,7 @@
 import groovy.transform.Field
 
+library 'jenkins-tutorial-shared-lib'
+
 // We need this because of the mono repo :(
 @Field String PROJECT_DIR = 'super-report-printer'
 
@@ -7,7 +9,7 @@ pipeline {
     // We should really use some specific agent, we are getting crashes on some agents without Node or Docker!
     agent {
         kubernetes {
-            inheritFrom 'Node16Alpine'
+            inheritFrom 'Node16Alpine Kaniko'
             defaultContainer 'node16'
             yamlMergeStrategy merge()
             yaml '''
@@ -23,16 +25,6 @@ pipeline {
                     limits:
                       cpu: 1
                       memory: 16Mi
-                - name: kaniko
-                  image: gcr.io/kaniko-project/executor:v1.9.1-debug
-                  command: ["sleep", "infinity"]
-                  resources:
-                    requests:
-                      cpu: 100m
-                      memory: 512Mi
-                    limits:
-                      cpu: 2
-                      memory: 1Gi
             '''
         }
     }
@@ -41,6 +33,7 @@ pipeline {
         buildDiscarder logRotator(numToKeepStr: '10')
         disableConcurrentBuilds()
         timeout(time: 10, unit: 'MINUTES')
+        ansiColor('xterm')
     }
 
     stages {
@@ -72,17 +65,27 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                dir(PROJECT_DIR) {
-                   container('kaniko') {
-                       sh '''/kaniko/executor --context=. \\
-                         --dockerfile=./Dockerfile \\
-                         --destination=super-report-printer:v0.1.0 \\
-                         --use-new-run --snapshotMode=redo \\
-                         --no-push
-                       '''
-                   }
+                script {
+                    kaniko.buildNoPush(
+                            imageName: 'super-report-printer',
+                            imageTag: getImageTags(),
+                            context: PROJECT_DIR,
+                            dockerfile: './Dockerfile',
+                            extraArgs: '--use-new-run --snapshotMode=redo'
+                    )
                 }
             }
         }
     }
+}
+
+def getImageTags() {
+    def commitTag = sanitizeImageTag("${env.GIT_BRANCH}-${env.GIT_COMMIT}")
+    def tags = [commitTag]
+
+    if (isMaster()) {
+        tags += 'latest'
+    }
+
+    return tags
 }
