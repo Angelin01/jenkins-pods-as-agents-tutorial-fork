@@ -44,6 +44,7 @@ pipeline {
         buildDiscarder logRotator(numToKeepStr: '10')
         disableConcurrentBuilds()
         timeout(time: 10, unit: 'MINUTES')
+        ansiColor('xterm')
     }
 
     stages {
