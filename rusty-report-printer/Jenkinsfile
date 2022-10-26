@@ -6,7 +6,7 @@ import groovy.transform.Field
 pipeline {
     agent {
         kubernetes {
-            inheritFrom 'Node18Alpine'
+            inheritFrom 'Node18Alpine Kaniko'
             yamlMergeStrategy merge()
             defaultContainer 'rust'
             yaml '''
@@ -22,16 +22,6 @@ pipeline {
                       limits:
                         cpu: 2
                         memory: 256Mi
-                  - name: kaniko
-                    image: gcr.io/kaniko-project/executor:v1.8.1-debug
-                    command: ["sleep", "infinity"]
-                    resources:
-                      requests:
-                        cpu: 100m
-                        memory: 512Mi
-                      limits:
-                        cpu: 2
-                        memory: 1Gi
             '''
         }
     }
